@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QR Cafe Order System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient ambient-a"></div>
+    <div class="ambient ambient-b"></div>
+
+    <main class="shell">
+      <aside class="hero-panel">
+        <div class="brand-mark">Q</div>
+        <p class="eyebrow">Self-Service Ordering</p>
+        <h1>Sistem Pemesanan Kafe via QR-Code</h1>
+        <p class="hero-copy">
+          Pelanggan memindai QR meja, memilih menu di ponsel, lalu pesanan langsung masuk ke dapur dan kasir secara real-time.
+        </p>
+
+        <div class="stats-grid">
+          <article>
+            <strong id="stat-order-count">0</strong>
+            <span>Pesanan masuk</span>
+          </article>
+          <article>
+            <strong id="stat-ready-count">0</strong>
+            <span>Siap diambil</span>
+          </article>
+          <article>
+            <strong id="stat-paid-count">0</strong>
+            <span>Sudah lunas</span>
+          </article>
+        </div>
+
+        <section class="info-card">
+          <h2>Arsitektur Inti</h2>
+          <ul>
+            <li>QR unik per meja untuk mapping otomatis.</li>
+            <li>Backend menghitung total, status, dan antrean pesanan.</li>
+            <li>Sinkronisasi real-time ke dapur dan kasir.</li>
+          </ul>
+        </section>
+
+        <section class="info-card soft">
+          <h2>Contoh QR Token</h2>
+          <p id="table-token-preview">--</p>
+          <div class="qr-preview-wrap">
+            <img id="qr-preview" class="qr-preview" alt="QR code menu pemesanan" />
+          </div>
+          <small>Gunakan token ini pada parameter URL atau input manual.</small>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Digital Menu Interaktif</p>
+            <h2 id="active-title">Pilih Mode</h2>
+          </div>
+          <div class="mode-switch" role="tablist" aria-label="Mode tampilan">
+            <button class="mode-btn active" data-view="customer" type="button">Pelanggan</button>
+            <button class="mode-btn" data-view="kitchen" type="button">Dapur</button>
+            <button class="mode-btn" data-view="cashier" type="button">Kasir</button>
+          </div>
+        </header>
+
+        <section class="panel customer-view active" id="customer-view">
+          <div class="card grid-2">
+            <article>
+              <h3>Mapping Meja</h3>
+              <p>Masukkan token QR meja atau gunakan URL <code>?qr=TOKEN</code> untuk simulasi scan.</p>
+              <div class="input-row">
+                <input id="qr-input" type="text" placeholder="Contoh: T01-7f3a" />
+                <button id="scan-btn" class="primary" type="button">Validasi</button>
+              </div>
+              <p class="meta" id="table-result">Belum ada meja yang dipilih.</p>
+            </article>
+
+            <article>
+              <h3>Ringkasan Pesanan</h3>
+              <p>Setiap item dihitung otomatis oleh backend agar kasir tidak perlu input ulang.</p>
+              <div class="summary-box">
+                <div><span>Subtotal</span><strong id="subtotal">Rp0</strong></div>
+                <div><span>Pajak</span><strong id="tax">Rp0</strong></div>
+                <div><span>Total</span><strong id="total">Rp0</strong></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="card">
+            <div class="section-heading">
+              <div>
+                <h3>Menu Digital</h3>
+                <p>Pilih menu, atur jumlah, dan lihat detail harga dengan transparan.</p>
+              </div>
+              <span class="pill" id="menu-count">0 menu aktif</span>
+            </div>
+            <div class="menu-grid" id="menu-grid"></div>
+          </div>
+
+          <div class="card grid-2">
+            <article>
+              <h3>Detail Pesanan</h3>
+              <div class="basket" id="basket-empty">Belum ada item yang dipilih.</div>
+              <div class="basket-list" id="basket-list"></div>
+            </article>
+            <article>
+              <h3>Catatan Pelanggan</h3>
+              <textarea id="order-note" rows="6" placeholder="Contoh: tanpa es, saus dipisah, pedas sedang"></textarea>
+              <button id="submit-order" class="primary full" type="button">Kirim ke Dapur</button>
+              <p class="meta" id="customer-status">Status pesanan akan tampil setelah dikirim.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel dashboard-view" id="kitchen-view">
+          <div class="card">
+            <div class="section-heading">
+              <div>
+                <h3>Dashboard Dapur</h3>
+                <p>Antrean tampil berurutan dari pesanan terbaru yang belum selesai.</p>
+              </div>
+              <span class="pill warn">Real-time queue</span>
+            </div>
+            <div id="kitchen-queue" class="queue-list"></div>
+          </div>
+        </section>
+
+        <section class="panel dashboard-view" id="cashier-view">
+          <div class="card">
+            <div class="section-heading">
+              <div>
+                <h3>Dashboard Kasir</h3>
+                <p>Semua pesanan masuk otomatis tanpa input manual.</p>
+              </div>
+              <span class="pill success">Live sync</span>
+            </div>
+            <div id="cashier-list" class="queue-list"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <template id="menu-card-template">
+      <article class="menu-card">
+        <img alt="" />
+        <div class="menu-card-body">
+          <div class="menu-card-head">
+            <div>
+              <h4></h4>
+              <p></p>
+            </div>
+            <strong></strong>
+          </div>
+          <p class="menu-desc"></p>
+          <div class="menu-actions">
+            <button class="ghost minus" type="button">-</button>
+            <span class="qty">0</span>
+            <button class="ghost plus" type="button">+</button>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
